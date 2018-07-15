@@ -1,4 +1,4 @@
-# DEsingle_subsampling pri-experiment
+# DEsingle_subsampling pre-experiment
 ## 目前功能
 生成四种基因的数据，并执行DEsingle，将结果保存。
 ## TODO

@@ -1,4 +1,4 @@
-# 产生符合ZINB(θ, μ, size, prob)的一组数字，长度为n 
+#鐢熸垚ZINB妯″瀷
 rzinbinom <- function(n, theta, size, prob = NULL, mu = NULL) {
     #n
     if (length(n) != 1)
@@ -43,3 +43,43 @@ rzinbinom <- function(n, theta, size, prob = NULL, mu = NULL) {
     return (res)
     }
 
+#Get four types of the genes
+DEsingle.res <- read.csv("./small_result.csv")
+DEsingle.res.DEg <- DEsingle.res[which(DEsingle.res$Type == "DEg"),]
+DEsingle.res.DEa <- DEsingle.res[which(DEsingle.res$Type == "DEa"),]
+DEsingle.res.DEs <- DEsingle.res[which(DEsingle.res$Type == "DEs"),]
+DEsingle.res.nDE <- DEsingle.res[which(is.na(DEsingle.res$Type)),]
+
+set.seed(Sys.time())
+
+#Generate genes with no different expression
+Generate_nDE <- function(Cell_in_group, geneNum = 500) {
+    if (length(Cell_in_group) != 1)
+        stop("length of Cell_in_group is not 1.")
+    if (!is.numeric(Cell_in_group))
+        stop("Cell_in_group must be a number.")
+    if (length(geneNum) != 1)
+        stop("length of geneNum is not 1.")
+    if (!is.numeric(geneNum))
+        stop("geneNum must be a number.")
+    if (geneNum <= 0)
+        stop("geneNum must be positive.")
+
+    res <- NULL
+    TotalSample <- nrow(DEsingle.res.nDE)
+    Sample <- DEsingle.res.nDE[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
+    SampleNum <- nrow(Sample)
+    for (i in 1:SampleNum) {
+        res <- rbind(res, rzinbinom(Cell_in_group * 2, mean(Sample[i, "theta_1"], Sample[i, "theta_2"]), mean(Sample[i, "size_1"], Sample[i, "size_2"]), prob = mean(Sample[i, "prob_1"], Sample[i, "prob_2"])))
+    }
+
+    gc()
+    return (res)
+}
+
+#start generation
+Cell_in_Groups <- c(100, 200, 500, 800, 1000, 1500, 2000)
+
+for (Sample_num in Cell_in_Groups) {
+
+}

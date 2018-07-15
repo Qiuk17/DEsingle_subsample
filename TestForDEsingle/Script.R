@@ -1,4 +1,5 @@
-#生成ZINB模型
+options(warn = 1)
+#Generate zinb destribution
 rzinbinom <- function(n, theta, size, prob = NULL, mu = NULL) {
     #n
     if (length(n) != 1)
@@ -69,17 +70,182 @@ Generate_nDE <- function(Cell_in_group, geneNum = 500) {
     TotalSample <- nrow(DEsingle.res.nDE)
     Sample <- DEsingle.res.nDE[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
     SampleNum <- nrow(Sample)
-    for (i in 1:SampleNum) {
+    for (i in 1: SampleNum) {
         res <- rbind(res, rzinbinom(Cell_in_group * 2, mean(Sample[i, "theta_1"], Sample[i, "theta_2"]), mean(Sample[i, "size_1"], Sample[i, "size_2"]), prob = mean(Sample[i, "prob_1"], Sample[i, "prob_2"])))
     }
-
+    gc()
+    #if sample is not enough, generate randomly.
+    if (geneNum > SampleNum) {
+        warning("Generating random data in nDE.")
+        for (i in (SampleNum + 1): geneNum) {
+            rand_theta <- runif(1)
+            rand_size <- runif(1, min = 1, max = 1E5)
+            rand_prob <- runif(1, min = 1E-4, max = 1)
+            res <- rbind(res, rzinbinom(Cell_in_group * 2, rand_theta, rand_size, prob = rand_prob))
+        }
+    }
+    rownames(res) <- paste0("gene_nDE_", 1: geneNum)
     gc()
     return (res)
 }
 
-#start generation
-Cell_in_Groups <- c(100, 200, 500, 800, 1000, 1500, 2000)
+#Generate DEs genes
+Generate_DEs <- function(Cell_in_group, geneNum = 500) {
+    if (length(Cell_in_group) != 1)
+        stop("length of Cell_in_group is not 1.")
+    if (!is.numeric(Cell_in_group))
+        stop("Cell_in_group must be a number.")
+    if (length(geneNum) != 1)
+        stop("length of geneNum is not 1.")
+    if (!is.numeric(geneNum))
+        stop("geneNum must be a number.")
+    if (geneNum <= 0)
+        stop("geneNum must be positive.")
 
-for (Sample_num in Cell_in_Groups) {
-
+    res <- NULL
+    TotalSample <- nrow(DEsingle.res.DEs)
+    Sample <- DEsingle.res.DEs[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
+    SampleNum <- nrow(Sample)
+    for (i in 1:SampleNum) {
+        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+    }
+    gc()
+    #if sample is not enough, generate randomly.
+    delta <- 0.3
+    if (geneNum > SampleNum) {
+        warning("Generating random data in DEs.")
+        for (i in (SampleNum + 1):geneNum) {
+            rand_theta_1 <- runif(1)
+            rand_theta_2 <- runif(1)
+            while (abs(rand_theta_1 - rand_theta_2) < delta) {
+                rand_theta_1 <- runif(1)
+                rand_theta_2 <- runif(1)
+            }
+            rand_size <- runif(1, min = 1, max = 1E5)
+            rand_prob <- runif(1, min = 1E-4, max = 1)
+            res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta_1, rand_size, prob = rand_prob), rzinbinom(Cell_in_group, rand_theta_2, rand_size, prob = rand_prob)))
+        }
+    }
+    rownames(res) <- paste0("gene_DEs_", 1:geneNum)
+    gc()
+    return(res)
 }
+
+#Generate DEg genes
+Generate_DEg <- function(Cell_in_group, geneNum = 500) {
+    if (length(Cell_in_group) != 1)
+        stop("length of Cell_in_group is not 1.")
+    if (!is.numeric(Cell_in_group))
+        stop("Cell_in_group must be a number.")
+    if (length(geneNum) != 1)
+        stop("length of geneNum is not 1.")
+    if (!is.numeric(geneNum))
+        stop("geneNum must be a number.")
+    if (geneNum <= 0)
+        stop("geneNum must be positive.")
+
+    res <- NULL
+    TotalSample <- nrow(DEsingle.res.DEg)
+    Sample <- DEsingle.res.DEg[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
+    SampleNum <- nrow(Sample)
+    for (i in 1:SampleNum) {
+        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+    }
+    gc()
+    #if sample is not enough, generate randomly.
+    delta <- 0.3
+    delta_size <- 1000
+    if (geneNum > SampleNum) {
+        warning("Generating random data in DEg.")
+        for (i in (SampleNum + 1):geneNum) {
+            rand_theta_1 <- runif(1)
+            rand_theta_2 <- runif(1)
+            while (abs(rand_theta_1 - rand_theta_2) < delta) {
+                rand_theta_1 <- runif(1)
+                rand_theta_2 <- runif(1)
+            }
+            rand_size_1 <- runif(1, min = 1, max = 1E5)
+            rand_size_2 <- runif(1, min = 1, max = 1E5)
+            while (abs(rand_size_1 - rand_size_2) < delta_size) {
+                rand_size_1 <- runif(1, min = 1, max = 1E5)
+                rand_size_2 <- runif(1, min = 1, max = 1E5)
+            }
+            rand_prob_1 <- runif(1, min = 1E-4, max = 1)
+            rand_prob_2 <- runif(1, min = 1E-4, max = 1)
+            while (abs(rand_prob_1 - rand_prob_2) < delta) {
+                rand_prob_1 <- runif(1, min = 1E-4, max = 1)
+                rand_prob_2 <- runif(1, min = 1E-4, max = 1)
+            }
+            res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta_1, rand_size_1, prob = rand_prob_1), rzinbinom(Cell_in_group, rand_theta_2, rand_size_2, prob = rand_prob_2)))
+        }
+    }
+    rownames(res) <- paste0("gene_DEg_", 1:geneNum)
+    gc()
+    return(res)
+}
+
+#Generate DEa genes
+Generate_DEa <- function(Cell_in_group, geneNum = 500) {
+    if (length(Cell_in_group) != 1)
+        stop("length of Cell_in_group is not 1.")
+    if (!is.numeric(Cell_in_group))
+        stop("Cell_in_group must be a number.")
+    if (length(geneNum) != 1)
+        stop("length of geneNum is not 1.")
+    if (!is.numeric(geneNum))
+        stop("geneNum must be a number.")
+    if (geneNum <= 0)
+        stop("geneNum must be positive.")
+
+    res <- NULL
+    TotalSample <- nrow(DEsingle.res.DEa)
+    Sample <- DEsingle.res.DEa[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
+    SampleNum <- nrow(Sample)
+    for (i in 1:SampleNum) {
+        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+    }
+    gc()
+    #if sample is not enough, generate randomly.
+    delta <- 0.4
+    delta_size <- 1E4
+    if (geneNum > SampleNum) {
+        warning("Generating random data in DEa.")
+        for (i in (SampleNum + 1):geneNum) {
+            rand_theta <- runif(1)
+            rand_size_1 <- runif(1, min = 1, max = 1E5)
+            rand_size_2 <- runif(1, min = 1, max = 1E5)
+            while (abs(rand_size_1 - rand_size_2) < delta_size) {
+                rand_size_1 <- runif(1, min = 1, max = 1E5)
+                rand_size_2 <- runif(1, min = 1, max = 1E5)
+            }
+            rand_prob_1 <- runif(1, min = 1E-4, max = 1)
+            rand_prob_2 <- runif(1, min = 1E-4, max = 1)
+            while (abs(rand_prob_1 - rand_prob_2) < delta) {
+                rand_prob_1 <- runif(1, min = 1E-4, max = 1)
+                rand_prob_2 <- runif(1, min = 1E-4, max = 1)
+            }
+            res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta, rand_size_1, prob = rand_prob_1), rzinbinom(Cell_in_group, rand_theta, rand_size_2, prob = rand_prob_2)))
+        }
+    }
+    rownames(res) <- paste0("gene_DEa_", 1:geneNum)
+    gc()
+    return(res)
+}
+
+#start generation
+#set these nums
+Cell_in_one_group <- 200
+nDE_num <- 500
+DEg_num <- 500
+DEs_num <- 500
+DEa_num <- 500
+
+counts <- Generate_DEs(Cell_in_one_group, DEs_num)
+counts <- rbind(counts, Generate_DEg(Cell_in_one_group, DEg_num))
+counts <- rbind(counts, Generate_DEa(Cell_in_one_group, DEa_num))
+counts <- rbind(counts, Generate_nDE(Cell_in_one_group, nDE_num))
+colnames(counts) <- paste0("cell_", 1:(Cell_in_one_group * 2))
+groups <- as.factor(c(rep(TRUE, Cell_in_one_group), rep(FALSE, Cell_in_one_group)))
+
+res <- DEtype(DEsingle(counts, groups), 0.05)
+write.csv(res, file = "./result.csv")

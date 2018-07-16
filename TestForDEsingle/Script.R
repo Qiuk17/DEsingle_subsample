@@ -1,4 +1,5 @@
 options(warn = 1)
+library(DEsingle)
 #Generate zinb destribution
 rzinbinom <- function(n, theta, size, prob = NULL, mu = NULL) {
     #n
@@ -67,11 +68,13 @@ Generate_nDE <- function(Cell_in_group, geneNum = 500) {
         stop("geneNum must be positive.")
 
     res <- NULL
+    record <- NULL
     TotalSample <- nrow(DEsingle.res.nDE)
     Sample <- DEsingle.res.nDE[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
     SampleNum <- nrow(Sample)
     for (i in 1: SampleNum) {
         res <- rbind(res, rzinbinom(Cell_in_group * 2, mean(Sample[i, "theta_1"], Sample[i, "theta_2"]), mean(Sample[i, "size_1"], Sample[i, "size_2"]), prob = mean(Sample[i, "prob_1"], Sample[i, "prob_2"])))
+        record <- rbind(record, c(rep(mean(Sample[i, "theta_1"], Sample[i, "theta_2"]), 2), rep(mean(Sample[i, "size_1"], Sample[i, "size_2"]), 2), rep(mean(Sample[i, "prob_1"], Sample[i, "prob_2"]), 2)))
     }
     gc()
     #if sample is not enough, generate randomly.
@@ -82,9 +85,12 @@ Generate_nDE <- function(Cell_in_group, geneNum = 500) {
             rand_size <- runif(1, min = 1, max = 1E5)
             rand_prob <- runif(1, min = 1E-4, max = 1)
             res <- rbind(res, rzinbinom(Cell_in_group * 2, rand_theta, rand_size, prob = rand_prob))
+            record <- rbind(record, c(rand_theta, rand_theta, rand_size, rand_size, rand_prob, rand_prob))
         }
     }
-    rownames(res) <- paste0("gene_nDE_", 1: geneNum)
+    rownames(res) <- paste0("gene_nDE_", 1:geneNum)
+    rownames(record) <- paste0("gene_nDE_", 1:geneNum)
+    write.csv(record, file = "./nDE_temp.csv")
     gc()
     return (res)
 }
@@ -103,11 +109,19 @@ Generate_DEs <- function(Cell_in_group, geneNum = 500) {
         stop("geneNum must be positive.")
 
     res <- NULL
+    record <- NULL
     TotalSample <- nrow(DEsingle.res.DEs)
     Sample <- DEsingle.res.DEs[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
     SampleNum <- nrow(Sample)
     for (i in 1:SampleNum) {
-        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+        theta_1 <- Sample[i, "theta_1"]
+        size_1 <- Sample[i, "size_1"]
+        prob_1 <- Sample[i, "prob_1"]
+        theta_2 <- Sample[i, "theta_2"]
+        size_2 <- Sample[i, "size_2"]
+        prob_2 <- Sample[i, "prob_2"]
+        res <- rbind(res, c(rzinbinom(Cell_in_group, theta_1, size_1, prob = prob_1), rzinbinom(Cell_in_group, theta_2, size_2, prob = prob_2)))
+        record <- rbind(record, c(theta_1, theta_2, size_1, size_2, prob_1, prob_2))
     }
     gc()
     #if sample is not enough, generate randomly.
@@ -124,9 +138,12 @@ Generate_DEs <- function(Cell_in_group, geneNum = 500) {
             rand_size <- runif(1, min = 1, max = 1E5)
             rand_prob <- runif(1, min = 1E-4, max = 1)
             res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta_1, rand_size, prob = rand_prob), rzinbinom(Cell_in_group, rand_theta_2, rand_size, prob = rand_prob)))
+            record <- rbind(record, c(rand_theta_1, rand_theta_2, rand_size, rand_size, rand_prob, rand_prob))
         }
     }
     rownames(res) <- paste0("gene_DEs_", 1:geneNum)
+    rownames(record) <- paste0("gene_DEs_", 1:geneNum)
+    write.csv(record, file = "./DEs_temp.csv")
     gc()
     return(res)
 }
@@ -145,11 +162,19 @@ Generate_DEg <- function(Cell_in_group, geneNum = 500) {
         stop("geneNum must be positive.")
 
     res <- NULL
+    record <- NULL
     TotalSample <- nrow(DEsingle.res.DEg)
     Sample <- DEsingle.res.DEg[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
     SampleNum <- nrow(Sample)
     for (i in 1:SampleNum) {
-        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+        theta_1 <- Sample[i, "theta_1"]
+        size_1 <- Sample[i, "size_1"]
+        prob_1 <- Sample[i, "prob_1"]
+        theta_2 <- Sample[i, "theta_2"]
+        size_2 <- Sample[i, "size_2"]
+        prob_2 <- Sample[i, "prob_2"]
+        res <- rbind(res, c(rzinbinom(Cell_in_group, theta_1, size_1, prob = prob_1), rzinbinom(Cell_in_group, theta_2, size_2, prob = prob_2)))
+        record <- rbind(record, c(theta_1, theta_2, size_1, size_2, prob_1, prob_2))
     }
     gc()
     #if sample is not enough, generate randomly.
@@ -177,9 +202,12 @@ Generate_DEg <- function(Cell_in_group, geneNum = 500) {
                 rand_prob_2 <- runif(1, min = 1E-4, max = 1)
             }
             res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta_1, rand_size_1, prob = rand_prob_1), rzinbinom(Cell_in_group, rand_theta_2, rand_size_2, prob = rand_prob_2)))
+            record <- rbind(record, c(rand_theta_1, rand_theta_2, rand_size_1, rand_size_2, rand_prob_1, rand_prob_2))
         }
     }
     rownames(res) <- paste0("gene_DEg_", 1:geneNum)
+    rownames(record) <- paste0("gene_DEg_", 1:geneNum)
+    write.csv(record, file = "./DEg_temp.csv")
     gc()
     return(res)
 }
@@ -198,11 +226,19 @@ Generate_DEa <- function(Cell_in_group, geneNum = 500) {
         stop("geneNum must be positive.")
 
     res <- NULL
+    record <- NULL
     TotalSample <- nrow(DEsingle.res.DEa)
     Sample <- DEsingle.res.DEa[sample(1:TotalSample, min(TotalSample, geneNum), replace = FALSE),]
     SampleNum <- nrow(Sample)
     for (i in 1:SampleNum) {
-        res <- rbind(res, c(rzinbinom(Cell_in_group, Sample[i, "theta_1"], Sample[i, "size_1"], prob = Sample[i, "prob_1"]), rzinbinom(Cell_in_group, Sample[i, "theta_2"], Sample[i, "size_2"], prob = Sample[i, "prob_2"])))
+        theta_1 <- Sample[i, "theta_1"]
+        size_1 <- Sample[i, "size_1"]
+        prob_1 <- Sample[i, "prob_1"]
+        theta_2 <- Sample[i, "theta_2"]
+        size_2 <- Sample[i, "size_2"]
+        prob_2 <- Sample[i, "prob_2"]
+        res <- rbind(res, c(rzinbinom(Cell_in_group, theta_1, size_1, prob = prob_1), rzinbinom(Cell_in_group, theta_2, size_2, prob = prob_2)))
+        record <- rbind(record, c(theta_1, theta_2, size_1, size_2, prob_1, prob_2))
     }
     gc()
     #if sample is not enough, generate randomly.
@@ -225,12 +261,17 @@ Generate_DEa <- function(Cell_in_group, geneNum = 500) {
                 rand_prob_2 <- runif(1, min = 1E-4, max = 1)
             }
             res <- rbind(res, c(rzinbinom(Cell_in_group, rand_theta, rand_size_1, prob = rand_prob_1), rzinbinom(Cell_in_group, rand_theta, rand_size_2, prob = rand_prob_2)))
+            record <- rbind(record, c(rand_theta, rand_theta, rand_size_1, rand_size_2, rand_prob_1, rand_prob_2))
         }
     }
     rownames(res) <- paste0("gene_DEa_", 1:geneNum)
+    rownames(record) <- paste0("gene_DEa_", 1:geneNum)
+    write.csv(record, file = "./DEa_temp.csv")
     gc()
     return(res)
 }
+
+
 
 #start generation
 #set these nums
@@ -244,7 +285,12 @@ counts <- Generate_DEs(Cell_in_one_group, DEs_num)
 counts <- rbind(counts, Generate_DEg(Cell_in_one_group, DEg_num))
 counts <- rbind(counts, Generate_DEa(Cell_in_one_group, DEa_num))
 counts <- rbind(counts, Generate_nDE(Cell_in_one_group, nDE_num))
+
 colnames(counts) <- paste0("cell_", 1:(Cell_in_one_group * 2))
+record <- rbind(read.csv("./nDE_temp.csv"), read.csv("./DEs_temp.csv"), read.csv("./DEg_temp.csv"), read.csv("./DEa_temp.csv"))
+colnames(record) <- c("gene_name", "theta_1", "theta_2", "size_1", "size_2", "prob_1", "prob_2")
+write.csv(record, file = "./origin_data.csv")
+remove(record)
 groups <- as.factor(c(rep(TRUE, Cell_in_one_group), rep(FALSE, Cell_in_one_group)))
 
 res <- DEtype(DEsingle(counts, groups), 0.05)

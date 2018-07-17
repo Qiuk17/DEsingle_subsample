@@ -271,32 +271,57 @@ Generate_DEa <- function(Cell_in_group, geneNum = 500) {
     return(res)
 }
 
-
-
-#start generation
-#set these nums
-Cell_in_one_group <- 500
 nDE_num <- 500
 DEg_num <- 500
 DEs_num <- 500
 DEa_num <- 500
 gene_sum <- sum(nDE_num, DEg_num, DEa_num, DEs_num)
-counts <- Generate_DEs(Cell_in_one_group, DEs_num)
-counts <- rbind(counts, Generate_DEg(Cell_in_one_group, DEg_num))
-counts <- rbind(counts, Generate_DEa(Cell_in_one_group, DEa_num))
-counts <- rbind(counts, Generate_nDE(Cell_in_one_group, nDE_num))
+LoU.DEa <- NULL
+LoU.DEg <- NULL
+LoU.DEs <- NULL
+LoU.Total <- NULL
+Cell_in_one_groups <- c(100, 200, 500, 800, 1000, 2000)
+for (Cell_in_one_group in Cell_in_one_groups) {
+    message(Cell_in_one_group, "start. \n")
+    counts <- Generate_DEs(Cell_in_one_group, DEs_num)
+    counts <- rbind(counts, Generate_DEg(Cell_in_one_group, DEg_num))
+    counts <- rbind(counts, Generate_DEa(Cell_in_one_group, DEa_num))
+    counts <- rbind(counts, Generate_nDE(Cell_in_one_group, nDE_num))
 
-colnames(counts) <- paste0("cell_", 1:(Cell_in_one_group * 2))
-record <- rbind(read.csv("./nDE_temp.csv"), read.csv("./DEs_temp.csv"), read.csv("./DEg_temp.csv"), read.csv("./DEa_temp.csv"))
-record <- cbind(record, rep(NA, gene_sum))
-colnames(record) <- c("gene_name", "theta_1", "theta_2", "size_1", "size_2", "prob_1", "prob_2", "Type", "DEsingle_Type")
-groups <- as.factor(c(rep(TRUE, Cell_in_one_group), rep(FALSE, Cell_in_one_group)))
+    colnames(counts) <- paste0("cell_", 1:(Cell_in_one_group * 2))
+    record <- rbind(read.csv("./nDE_temp.csv"), read.csv("./DEs_temp.csv"), read.csv("./DEg_temp.csv"), read.csv("./DEa_temp.csv"))
+    record <- cbind(record, rep(NA, gene_sum))
+    colnames(record) <- c("gene_name", "theta_1", "theta_2", "size_1", "size_2", "prob_1", "prob_2", "Type", "DEsingle_Type")
+    groups <- as.factor(c(rep(TRUE, Cell_in_one_group), rep(FALSE, Cell_in_one_group)))
 
-res <- DEtype(DEsingle(counts, groups), 0.05)
-for (i in 1:gene_sum) {
-    try(record[i, "DEsingle_Type"] <- res[which(rownames(res) == as.character(record[i, "gene_name"])), "Type"])
+    res <- DEtype(DEsingle(counts, groups), 0.05)
+    for (i in 1:gene_sum) {
+        try(record[i, "DEsingle_Type"] <- res[which(rownames(res) == as.character(record[i, "gene_name"])), "Type"])
+    }
+    #save data for further use
+    write.csv(res, file = paste0("./DEsingle_result_", Cell_in_one_group, ".csv"))
+    write.csv(record, file = paste0("./Origin_data_", Cell_in_one_group, ".csv"))
+
+    #calculate LoU
+    L.DEa <- sum(record[which(record[, "Type"] == "DEa"), "Type"] == record[, "DEsingle_Type"])
+    L.DEg <- sum(record[which(record[, "Type"] == "DEg"), "Type"] == record[, "DEsingle_Type"])
+    L.DEs <- sum(record[which(record[, "Type"] == "DEs"), "Type"] == record[, "DEsingle_Type"])
+    U.DEa <- sum(record[, "Type"] == "DEa") + sum(record[, "DEsingle_Type"] == "DEa") - L.DEa
+    U.DEg <- sum(record[, "Type"] == "DEg") + sum(record[, "DEsingle_Type"] == "DEg") - L.DEg
+    U.DEs <- sum(record[, "Type"] == "DEs") + sum(record[, "DEsingle_Type"] == "DEs") - L.DEs
+    L.Total <- sum(L.DEa, L.DEg, L.DEs)
+    U.Total <- sum(U.DEa, U.DEg, U.DEs)
+    LoU.DEa <- c(LoU.DEa, L.DEa / U.DEa)
+    LoU.DEg <- c(LoU.DEg, L.DEg / U.DEg)
+    LoU.DEs <- c(LoU.DEs, L.DEs / U.DEs)
+    LoU.Total <- c(LoU.Total, L.Total / U.Total)
 }
 
-write.csv(res, file = "./DEsingle_result.csv")
-write.csv(record, file = "./origin_data.csv")
-message("Script done.")
+#draw a graph for Cell_in_one_group - LoU
+png(filename = "./graph.png", width = 2000, height = 2000)
+lines(Cell_in_one_groups, LoU.DEa, col = 1)
+lines(Cell_in_one_groups, LoU.DEg, col = 2)
+lines(Cell_in_one_groups, LoU.DEs, col = 3)
+lines(Cell_in_one_groups, LoU.Total, col = 4)
+legend("bottomright", legend = c("DEa", "DEg", "DEs", "Total"), col = c(1, 2, 3, 4))
+dev.off()

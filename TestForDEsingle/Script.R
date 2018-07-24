@@ -303,12 +303,12 @@ for (Cell_in_one_group in Cell_in_one_groups) {
     write.csv(record, file = paste0("./Origin_data_", Cell_in_one_group, ".csv"))
 
     #calculate LoU
-    L.DEa <- sum(record[which(record[, "Type"] == "DEa"), "Type"] == record[, "DEsingle_Type"])
-    L.DEg <- sum(record[which(record[, "Type"] == "DEg"), "Type"] == record[, "DEsingle_Type"])
-    L.DEs <- sum(record[which(record[, "Type"] == "DEs"), "Type"] == record[, "DEsingle_Type"])
-    U.DEa <- sum(record[, "Type"] == "DEa") + sum(record[, "DEsingle_Type"] == "DEa") - L.DEa
-    U.DEg <- sum(record[, "Type"] == "DEg") + sum(record[, "DEsingle_Type"] == "DEg") - L.DEg
-    U.DEs <- sum(record[, "Type"] == "DEs") + sum(record[, "DEsingle_Type"] == "DEs") - L.DEs
+    L.DEa <- sum(record[which(record[, "Type"] == "DEa"), "Type"] == record[which(record[, "Type"] == "DEa"), "DEsingle_Type"], na.rm = TRUE)
+    L.DEg <- sum(record[which(record[, "Type"] == "DEg"), "Type"] == record[which(record[, "Type"] == "DEg"), "DEsingle_Type"], na.rm = TRUE)
+    L.DEs <- sum(record[which(record[, "Type"] == "DEs"), "Type"] == record[which(record[, "Type"] == "DEs"), "DEsingle_Type"], na.rm = TRUE)
+    U.DEa <- sum(record[, "Type"] == "DEa", na.rm = TRUE) + sum(record[, "DEsingle_Type"] == "DEa", na.rm = TRUE) - L.DEa
+    U.DEg <- sum(record[, "Type"] == "DEg", na.rm = TRUE) + sum(record[, "DEsingle_Type"] == "DEg", na.rm = TRUE) - L.DEg
+    U.DEs <- sum(record[, "Type"] == "DEs", na.rm = TRUE) + sum(record[, "DEsingle_Type"] == "DEs", na.rm = TRUE) - L.DEs
     L.Total <- sum(L.DEa, L.DEg, L.DEs)
     U.Total <- sum(U.DEa, U.DEg, U.DEs)
     LoU.DEa <- c(LoU.DEa, L.DEa / U.DEa)
@@ -319,9 +319,13 @@ for (Cell_in_one_group in Cell_in_one_groups) {
 
 #draw a graph for Cell_in_one_group - LoU
 png(filename = "./graph.png", width = 2000, height = 2000)
-lines(Cell_in_one_groups, LoU.DEa, col = 1)
-lines(Cell_in_one_groups, LoU.DEg, col = 2)
-lines(Cell_in_one_groups, LoU.DEs, col = 3)
-lines(Cell_in_one_groups, LoU.Total, col = 4)
-legend("bottomright", legend = c("DEa", "DEg", "DEs", "Total"), col = c(1, 2, 3, 4))
+plot(Cell_in_one_groups, LoU.DEa, col = 1, pch = 1, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+plot(Cell_in_one_groups, LoU.DEs, col = 2, pch = 2, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+plot(Cell_in_one_groups, LoU.DEg, col = 3, pch = 3, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+plot(Cell_in_one_groups, LoU.Total, col = 4, pch = 4, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+lines(Cell_in_one_groups, LoU.DEa, col = 1, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+lines(Cell_in_one_groups, LoU.DEg, col = 2, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+lines(Cell_in_one_groups, LoU.DEs, col = 3, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+lines(Cell_in_one_groups, LoU.Total, col = 4, xlim = c(0, 2100), ylim = c(0, 1), ylab = "IoU")
+legend("bottomright", legend = c("DEa", "DEg", "DEs", "Total"), col = c(1, 2, 3, 4), pch = c(1,2,3,4))
 dev.off()
